@@ -1,7 +1,12 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 type F = { k: string; l: string; t: 'text' | 'area' | 'date' | 'mood' | 'url' | 'lang' };
-const api = async (u: string, o?: any) => (await fetch(u, o && { method: o.m || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o.b) })).json();
+const api = async (u: string, o?: any) => {
+  try {
+    const r = await fetch(u, o && { method: o.m || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o.b) });
+    return await r.json();
+  } catch { return { error: 'Server error. Check the terminal running npm run dev.' }; }
+};
 const LANGS: Record<string, string> = {
   Words: 'Send one specific compliment today.', Time: 'Offer 20 undivided minutes, phone away.',
   Gifts: 'Bring a tiny surprise, even a snack.', Service: 'Take one chore off their plate.', Touch: 'Give a long hug or hand hold.' };
@@ -89,8 +94,13 @@ export default function Home() {
   useEffect(() => { api('/api/auth').then(r => setAuth(r.in)); }, []);
   if (auth === null) return null;
   if (!auth) return <Login onIn={() => setAuth(true)} />;
+  const logout = async () => { await api('/api/auth', { b: { action: 'logout' } }); setTab(0); setAuth(false); };
   const tabs = ['Today', 'Us', 'Memory', 'Away'];
   return <>
+    <div className="flex justify-between items-center mb-4">
+      <h1 className="font-bold text-lg">💞 Us</h1>
+      <button className="text-xs border border-rose-300 text-rose-500 rounded-full px-3 py-1" onClick={logout}>Log out</button>
+    </div>
     {tab === 0 && <><Micro /><Quiz />
       <Section kind="date" title="Important dates" hint="Anniversaries, birthdays, first-times" fields={[{ k: 'title', l: 'What', t: 'text' }, { k: 'date', l: '', t: 'date' }]} extra={p => (p.date ? daysTo(p.date) : '')} /></>}
     {tab === 1 && <><Section kind="checkin" title="Weekly check-in" hint="How was our week?" fields={[{ k: 'mood', l: 'Mood', t: 'mood' }, { k: 'text', l: 'One thing I appreciated / need', t: 'area' }]} after={its => <Trend items={its} />} />
@@ -99,8 +109,7 @@ export default function Home() {
       <Section kind="letter" title="Letters to the future" seal fields={[{ k: 'text', l: 'Dear us…', t: 'area' }]} /></>}
     {tab === 3 && <><Section kind="distance" title="Long-distance mode" hint="Timezone like Africa/Nairobi or Europe/London, plus your next visit" fields={[{ k: 'tz', l: 'My timezone', t: 'text' }, { k: 'visit', l: '', t: 'date' }]} extra={p => [p.tz && clock(p.tz), p.visit && 'visit ' + daysTo(p.visit)].filter(Boolean).join(' · ')} />
       <Section kind="sync" title="Sync moments" hint="Do the same thing at the same time: tea, a song, stargazing." fields={[{ k: 'text', l: "Let's both… at 9pm", t: 'text' }]} />
-      <Section kind="dream" title="Dream journal" seal fields={[{ k: 'text', l: 'Last night I dreamed…', t: 'area' }]} after={its => <Themes items={its} />} />
-      <button className="text-xs underline" onClick={async () => { await api('/api/auth', { b: { action: 'logout' } }); setAuth(false); }}>Lock</button></>}
+      <Section kind="dream" title="Dream journal" seal fields={[{ k: 'text', l: 'Last night I dreamed…', t: 'area' }]} after={its => <Themes items={its} />} /></>}
     <nav className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white border-t border-rose-100 flex">
       {tabs.map((t, i) => <button key={t} onClick={() => setTab(i)} className={'flex-1 py-4 text-sm ' + (tab === i ? 'text-rose-500 font-semibold' : 'text-gray-400')}>{t}</button>)}</nav>
   </>;
