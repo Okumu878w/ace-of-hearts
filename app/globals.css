@@ -1,0 +1,5 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+body{background:#fdf2f4;color:#3b2630;font-family:system-ui,sans-serif}
+.card{@apply bg-white rounded-2xl p-4 mb-4 shadow-sm}
+.inp{@apply w-full border border-rose-200 rounded-xl px-3 py-2 mb-2 text-sm bg-white}
+.btn{@apply bg-rose-500 text-white rounded-xl px-4 py-2 text-sm font-medium active:scale-95}
